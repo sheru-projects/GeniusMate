@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Genius Mate - AI Chat Assistant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#00BFFF',
+                        dark: '#000000',
+                        light: '#ffffff',
+                    },
+                    animation: {
+                        'pulse-light': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: black;
+            color: white;
+        }
+        
+        .chat-container {
+            height: calc(100vh - 180px);
+        }
+        
+        .chat-messages {
+            height: calc(100% - 80px);
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #00BFFF black;
+        }
+        
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .chat-messages::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+        
+        .chat-messages::-webkit-scrollbar-thumb {
+            background-color: #00BFFF;
+            border-radius: 10px;
+        }
+        
+        .message {
+            max-width: 80%;
+            margin-bottom: 15px;
+            padding: 12px 16px;
+            border-radius: 10px;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .user-message {
+            background-color: rgba(255, 255, 255, 0.1);
+            align-self: flex-end;
+            border-bottom-right-radius: 2px;
+            margin-left: auto; /* Push user messages to the right */
+        }
+        
+        .bot-message {
+            background-color: rgba(0, 191, 255, 0.15);
+            align-self: flex-start;
+            border-bottom-left-radius: 2px;
+            margin-right: auto; /* Push bot messages to the left */
+        }
+        
+        .typing-indicator {
+            display: inline-flex;
+            align-items: center;
+        }
+        
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            margin: 0 2px;
+            background-color: #00BFFF;
+            border-radius: 50%;
+            opacity: 0.6;
+        }
+        
+        .typing-dot:nth-child(1) {
+            animation: typing 1s infinite 0s;
+        }
+        
+        .typing-dot:nth-child(2) {
+            animation: typing 1s infinite 0.2s;
+        }
+        
+        .typing-dot:nth-child(3) {
+            animation: typing 1s infinite 0.4s;
+        }
+        
+        @keyframes typing {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+            100% { transform: translateY(0); }
+        }
+        
+        .code-block {
+            background-color: #1a1a1a;
+            border-radius: 6px;
+            padding: 12px;
+            margin: 10px 0;
+            position: relative;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 8px;
+        }
+        
+        .copy-btn {
+            background-color: transparent;
+            color: #00BFFF;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        
+        .copy-btn:hover {
+            color: white;
+        }
+        
+        .social-icon {
+            transition: all 0.3s ease;
+        }
+        
+        .social-icon:hover {
+            transform: translateY(-5px);
+            color: #00BFFF;
+        }
+        
+        .input-container {
+            position: relative;
+        }
+        
+        .mic-btn {
+            position: absolute;
+            right: 60px; /* Adjusted for upload button */
+            top: 50%;
+            transform: translateY(-50%);
+            background: transparent;
+            border: none;
+            color: #00BFFF;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .mic-btn:hover, .mic-btn.active {
+            color: white;
+        }
+        
+        .mic-btn.active {
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .send-btn {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: transparent;
+            border: none;
+            color: #00BFFF;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .send-btn:hover {
+            color: white;
+        }
+
+        .upload-btn { /* New style for upload button */
+            position: absolute;
+            left: 15px; /* Positioned to the left */
+            top: 50%;
+            transform: translateY(-50%);
+            background: transparent;
+            border: none;
+            color: #00BFFF;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .upload-btn:hover {
+            color: white;
+        }
+        
+        .language-label {
+            color: #00BFFF;
+            font-size: 12px;
+        }
+        
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-x: auto;
+            max-width: 100%;
+        } 
+
+        code {
+            color: #e6e6e6;
+        }
+        
+        /* Fix for message display */
+        .message p {
+            margin-bottom: 8px;
+        }
+        
+        .message p:last-child {
+            margin-bottom: 0;
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+    <!-- Navbar -->
+    <nav class="bg-black border-b border-gray-800 py-4 px-6">
+        <div class="container mx-auto flex justify-center items-center">
+            <div class="flex items-center space-x-2">
+                <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+                    <i class="fas fa-robot text-black"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-white">Genius Mate</h1>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <main class="flex-grow container mx-auto px-4 py-6">
+        <div class="chat-container flex flex-col bg-black border border-gray-800 rounded-lg shadow-lg overflow-hidden">
+            <div class="chat-messages flex flex-col p-4" id="chatMessages">
+                <div class="message bot-message">
+                    <p>Hello! I'm Genius Mate, your AI assistant. How can I help you today?</p>
+                </div>
+            </div>
+            
+            <div class="input-container mt-auto border-t border-gray-800 p-4">
+                <form id="chatForm" class="relative">
+                    <input type="text" id="userInput" class="w-full bg-gray-900 text-white rounded-lg pl-12 pr-24 py-3 focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Ask me anything...">
+                    
+                    <!-- File Upload Button and Hidden Input -->
+                    <input type="file" id="fileInput" class="hidden" multiple accept="image/*, video/*, .pdf, .doc, .docx, .xls, .xlsx, .ppt, .pptx, .html, .css, .js, .py, .txt">
+                    <button type="button" id="uploadBtn" class="upload-btn">
+                        <i class="fas fa-paperclip"></i> <!-- Paperclip icon for upload -->
+                    </button>
+
+                    <button type="button" id="micBtn" class="mic-btn"> 
+                        <i class="fas fa-microphone"></i> 
+                    </button> 
+                    <button type="submit" class="send-btn"> 
+                        <i class="fas fa-paper-plane"></i> 
+                    </button> 
+                </form> 
+            </div> 
+        </div> 
+    </main> 
+    
+    <!-- Footer --> 
+    <footer class="bg-black border-t border-gray-800 py-8 px-6"> 
+        <div class="container mx-auto"> 
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8"> 
+                <!-- Logo Section --> 
+                <div class="flex flex-col items-center md:items-start"> 
+                    <div class="flex items-center space-x-2 mb-4"> 
+                        <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center"> 
+                            <i class="fas fa-robot text-black text-xl"></i> 
+                        </div> 
+                        <h2 class="text-2xl font-bold text-white">Genius Mate</h2> 
+                    </div> 
+                    <p class="text-gray-400 text-center md:text-left">Your intelligent AI companion for chatting, voicing, learning, and problem-solving.</p>
+                </div> 
+                
+                <!-- Social Media Icons --> 
+                <div class="flex flex-col items-center"> 
+                    <h3 class="text-lg font-semibold mb-4 text-white">Connect With Us</h3> 
+                    <div class="flex space-x-6"> 
+                        <a href="https://www.facebook.com/share/19qAwNFLXy/" target="_blank" class="social-icon text-2xl text-gray-400"> 
+                            <i class="fab fa-facebook"></i> 
+                        </a> 
+                        <a href="https://www.instagram.com/sheru_1107?igsh=eHN3MWI0cWc5cmM0" target="_blank" class="social-icon text-2xl text-gray-400"> 
+                            <i class="fab fa-instagram"></i> 
+                        </a> 
+                        <a href="https://www.linkedin.com/in/sarfraz-ahmed-bb8b6735b?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app" target="_blank" class="social-icon text-2xl text-gray-400"> 
+                            <i class="fab fa-linkedin"></i> 
+                        </a> 
+                        <a href="https://github.com/sheru-projects" target="_blank" class="social-icon text-2xl text-gray-400"> 
+                            <i class="fab fa-github"></i>
+                        </a> 
+                    </div> 
+                </div> 
+                
+                <!-- Features --> 
+                <div class="flex flex-col items-center md:items-start"> 
+                    <h3 class="text-lg font-semibold mb-4 text-white">Key Features</h3> 
+                    <ul class="text-gray-400 space-y-2"> 
+                        <li class="flex items-center"> 
+                            <i class="fas fa-check text-primary mr-2"></i> 
+                            Smart AI Chat Responses 
+                        </li> 
+                        <li class="flex items-center"> 
+                            <i class="fas fa-check text-primary mr-2"></i> 
+                            Voice-to-Text Conversion 
+                        </li> 
+                        <li class="flex items-center"> 
+                            <i class="fas fa-check text-primary mr-2"></i> 
+                            Uploading all Types of files 
+                        </li> 
+                        <li class="flex items-center"> 
+                            <i class="fas fa-check text-primary mr-2"></i> 
+                            24/7 Intelligent Assistance 
+                        </li> 
+                    </ul> 
+                </div> 
+            </div> 
+            
+            <div class="mt-8 pt-6 border-t border-gray-800 text-center"> 
+                <p class="text-gray-500">© 2025-2026 | <span style="color: #00BFFF;"> SheruBhai </span> | All Rights Reserved.</p> 
+            </div> 
+        </div> 
+    </footer> 
+<script> 
+document.addEventListener('DOMContentLoaded', () => { 
+    const chatMessages = document.getElementById('chatMessages'); 
+    const chatForm = document.getElementById('chatForm'); 
+    const userInput = document.getElementById('userInput'); 
+    const micBtn = document.getElementById('micBtn'); 
+    const fileInput = document.getElementById('fileInput'); // New
+    const uploadBtn = document.getElementById('uploadBtn'); // New
+
+    let recognition; 
+    let isListening = false; 
+    let attachedFiles = []; // To store files before sending
+
+    // ==== Initialize Speech Recognition (if supported) ==== 
+    if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) { 
+        recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)(); 
+        recognition.continuous = false; 
+        recognition.interimResults = false; 
+        recognition.lang = 'en-US'; 
+
+        // When voice input is recognized 
+        recognition.onresult = function (event) { 
+            const transcript = event.results[0][0].transcript; 
+            userInput.value = transcript; 
+
+            // Submit the form after short delay 
+            setTimeout(() => { 
+                chatForm.dispatchEvent(new Event('submit')); 
+            }, 500); 
+        }; 
+
+        recognition.onend = function () { 
+            micBtn.classList.remove('active'); 
+            isListening = false; 
+            micBtn.innerHTML = '<i class="fas fa-microphone"></i>'; 
+        }; 
+
+        recognition.onerror = function (event) { 
+            console.error('Speech recognition error:', event.error); 
+            micBtn.classList.remove('active'); 
+            isListening = false; 
+            micBtn.innerHTML = '<i class="fas fa-microphone"></i>'; 
+        }; 
+
+        // Toggle mic button for voice input 
+        micBtn.addEventListener('click', () => { 
+            if (isListening) { 
+                recognition.stop(); 
+                micBtn.classList.remove('active'); 
+                micBtn.innerHTML = '<i class="fas fa-microphone"></i>'; 
+            } else { 
+                recognition.start(); 
+                micBtn.classList.add('active'); 
+                micBtn.innerHTML = '<i class="fas fa-microphone-slash"></i>'; 
+                isListening = true; 
+            } 
+        }); 
+    } else { 
+        micBtn.style.display = 'none'; 
+        console.warn('Speech recognition not supported in this browser'); 
+    } 
+
+    // ==== Handle Upload Button Click ====
+    uploadBtn.addEventListener('click', () => {
+        fileInput.click(); // Trigger the hidden file input
+    });
+
+    // ==== Handle File Selection ====
+    fileInput.addEventListener('change', (event) => {
+        attachedFiles = Array.from(event.target.files);
+        if (attachedFiles.length > 0) {
+            // Optional: Display a temporary message or preview for attached files
+            // For now, the files will be displayed when the message is sent.
+            console.log(`Files attached: ${attachedFiles.map(f => f.name).join(', ')}`);
+        }
+    });
+
+    // ==== Handle Chat Form Submission ==== 
+    chatForm.addEventListener('submit', function (e) { 
+        e.preventDefault(); 
+        const message = userInput.value.trim(); 
+
+        // Only proceed if there's a message or attached files
+        if (message || attachedFiles.length > 0) { 
+            // Add user message to chat
+            addMessage('user', message); 
+
+            // If files are attached, display them as part of the user message
+            if (attachedFiles.length > 0) {
+                attachedFiles.forEach(file => {
+                    if (file.type.startsWith('image/')) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            const img = document.createElement('img');
+                            img.src = e.target.result;
+                            img.className = 'max-w-xs h-auto rounded-lg my-2'; // Tailwind classes for styling
+                            const userMessageDiv = chatMessages.lastChild; // Assuming it's the last user message
+                            userMessageDiv.appendChild(img);
+                            scrollToBottom();
+                        };
+                        reader.readAsDataURL(file);
+                    } else {
+                        // For non-image files, just show the filename
+                        const fileSpan = document.createElement('span');
+                        fileSpan.textContent = `File: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`;
+                        fileSpan.className = 'block text-sm text-gray-400 mt-1';
+                        const userMessageDiv = chatMessages.lastChild;
+                        userMessageDiv.appendChild(fileSpan);
+                        scrollToBottom();
+                    }
+                });
+            }
+
+            userInput.value = ''; 
+            userInput.focus(); 
+
+            // Show typing indicator 
+            const typingIndicator = document.createElement('div'); 
+            typingIndicator.className = 'message bot-message typing-indicator'; 
+            typingIndicator.id = 'typingIndicator'; 
+            typingIndicator.innerHTML = ` 
+                <div class="typing-dot"></div> 
+                <div class="typing-dot"></div> 
+                <div class="typing-dot"></div> 
+            `; 
+            chatMessages.appendChild(typingIndicator); 
+            scrollToBottom(); 
+
+            // Simulate AI response after a short delay 
+            setTimeout(() => { 
+                const typingElement = document.getElementById('typingIndicator'); 
+                if (typingElement) typingElement.remove(); 
+                processUserMessage(message, attachedFiles); // Pass attached files
+                attachedFiles = []; // Clear attached files after sending
+                fileInput.value = ''; // Clear file input value
+            }, 1500); 
+        } 
+    }); 
+
+    // ==== Function to Add Message to Chat ==== 
+    function addMessage(sender, content) { 
+        const messageDiv = document.createElement('div'); 
+        messageDiv.className = `message ${sender}-message`; 
+        // Handle content that might be an empty string if only files are sent
+        messageDiv.innerHTML = `<p>${content || ''}</p>`; 
+        chatMessages.appendChild(messageDiv); 
+        scrollToBottom(); 
+    } 
+
+    // ==== Scroll to Bottom of Chat ==== 
+    function scrollToBottom() { 
+        chatMessages.scrollTop = chatMessages.scrollHeight; 
+    } 
+
+    // ==== Send User Message and Files to Gemini API ==== 
+    async function processUserMessage(message, files = []) { 
+        try { 
+            const contents = []; 
+
+            // Add text part if message exists
+            if (message) {
+                contents.push({
+                    role: 'user',
+                    parts: [{ text: message }]
+                });
+            }
+
+            // Process and add image files as inline_data parts
+            for (const file of files) {
+                if (file.type.startsWith('image/')) {
+                    const base64 = await fileToBase64(file); // Convert image to Base64
+                    contents.push({
+                        role: 'user', // Images are also part of user input
+                        parts: [{
+                            inline_data: {
+                                mime_type: file.type,
+                                data: base64.split(',')[1] // Remove "data:image/png;base64," prefix
+                            }
+                        }]
+                    });
+                } else {
+                    // For other file types, Gemini Vision model cannot directly process them via inline_data.
+                    // A backend server would be needed to extract text from documents (PDF, DOCX, etc.)
+                    // and then send that extracted text to Gemini.
+                    console.warn(`File type not directly supported by Gemini Vision for inline_data: ${file.name} (${file.type})`);
+                    addMessage('bot', `I've received your file: "${file.name}". Currently, I can only process images directly. For other document types, please try pasting the text content or using a tool that extracts text from them.`);
+                }
+            }
+
+            if (contents.length === 0) {
+                console.warn('No content (text or supported files) to send to Gemini API.');
+                addMessage('bot', "Please provide some text or an image to get a response.");
+                return;
+            }
+
+            // IMPORTANT: Replace "YOUR_GEMINI_API_KEY_HERE" with your actual Gemini API Key.
+            // Get your API key from Google AI Studio: https://aistudio.google.com/app/apikey
+            const apiKey = "AIzaSyDOaq9ptcCRXk62y2IU10tURhaPeiDzp7o"; 
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyDOaq9ptcCRXk62y2IU10tURhaPeiDzp7o`;
+
+            const payload = { contents: contents };
+
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json(); 
+
+            // Check for API errors more robustly
+            if (data.error) { 
+                console.error('Gemini API Error:', data.error.message); 
+                addMessage('bot', `Error from AI: ${data.error.message}. Please check your API key and network connection.`); 
+                return; 
+            } 
+            
+            // Check if candidates and content parts exist
+            const botReply = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+            if (botReply) {
+                addMessage('bot', botReply); 
+            } else {
+                console.warn('Gemini API returned no text content in its response.', data);
+                addMessage('bot', 'The AI did not provide a text response. It might be processing, or there was an issue with the content provided.');
+            }
+
+        } catch (err) { 
+            console.error('Fetch error:', err); 
+            addMessage('bot', 'Oops! Something went wrong contacting Gemini. Please check your internet connection.'); 
+        } 
+    } 
+
+    // Helper function to convert file to Base64
+    function fileToBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+    }
+
+    // ==== Autofocus on Input ==== 
+    userInput.focus(); 
+}); 
+</script> 
+</body> 
+</html>
